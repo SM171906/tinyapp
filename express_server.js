@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 const PORT = 8080;
 const bodyParser = require("body-parser");
+const { response } = require("express");
 
 function generateRandomString() {
   let result = '';
@@ -34,8 +35,10 @@ app.get("/urls", (req, res) => {
 });
  
 app.post("/urls", (req, res) => {
+  shortURL = generateRandomString();
+  urlDatabase[shortURL] = req.body.longURL;
   console.log(req.body);  // Log the POST request body to the console
-  res.send("Ok");         // Respond with 'Ok' (we will replace this)
+  res.redirect(`/urls/${shortURL}`);        
 });
 
 app.get("/urls/new", (req, res) => {
@@ -45,10 +48,15 @@ app.get("/urls/new", (req, res) => {
 
 
 app.get("/urls/:shortURL", (req, res) => {
-  const templateVars = { shortURL: req.params.shortURL, longURL: req.params.longURL };
+  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] };
   res.render("urls_show", templateVars);
 });
 
+app.get("/u/:shortURL", (req, res) => {
+  // const longURL = ...
+  const longURL = urlDatabase[req.params.shortURL];
+  res.redirect(longURL);
+});
 
 
 
