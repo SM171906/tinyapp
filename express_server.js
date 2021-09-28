@@ -18,7 +18,7 @@ function generateRandomString() {
 
 app.set("view engine", "ejs");
 
-app.use(bodyParser.urlencoded({extended: true}));
+app.use(bodyParser.urlencoded({ extended: true }));
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
@@ -33,11 +33,11 @@ app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase };
   res.render("urls_index", templateVars);
 });
- 
+
 app.post("/urls", (req, res) => {
   shortURL = generateRandomString();
   urlDatabase[shortURL] = req.body.longURL;
-  res.redirect(`/urls/${shortURL}`);        
+  res.redirect(`/urls/${shortURL}`);
 });
 
 app.get("/urls/new", (req, res) => {
@@ -51,15 +51,24 @@ app.get("/urls/:shortURL", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
+app.post("/urls/:id", (req, res) => {
+  const shortURL = req.params.id;
+  urlDatabase[shortURL] = req.body.updateUrl; // udateUrl is from urls_show(name)
+  res.redirect("/urls");
+});
+
 app.get("/u/:shortURL", (req, res) => {
   // const longURL = ...
   const longURL = urlDatabase[req.params.shortURL];
-  if(!longURL){
+  if (!longURL) {
     res.send("<html><body>Error!!</body></html>\n");
     return;
   }
   res.redirect(longURL);
 });
+
+
+
 
 app.post("/urls/:shortURL/delete", (req, res) => {
   delete urlDatabase[req.params.shortURL];
