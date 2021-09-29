@@ -4,9 +4,11 @@ const PORT = 8080;
 const bodyParser = require("body-parser");
 const  response  = require("express");
 const cookieParser = require('cookie-parser');
+const { v4: uuidv4 } = require('uuid');
 
 app.use(cookieParser());
 app.use(bodyParser.urlencoded({ extended: true }));
+app.set("view engine", "ejs");
 
 
 function generateRandomString() {
@@ -20,9 +22,6 @@ function generateRandomString() {
   return result.substring(0, 6);
 
 };
-
-app.set("view engine", "ejs");
-
 
 
 const urlDatabase = {
@@ -52,7 +51,6 @@ const addNewUser = (email, password) => {
 
   const newUser = {
     id: userId,
-   
     email,
     password,
   };
@@ -76,7 +74,13 @@ app.get("/", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase, username: req.cookies["username"] };
+  // read the user id from the cookies
+  const userId = req.cookies['user_id'];
+   // retrieve the user object from users db
+   console.log(users);
+   const currentUser = users[userId];
+   console.log(currentUser);
+  const templateVars = { urls: urlDatabase, user: currentUser };
   res.render("urls_index", templateVars);
 });
 
@@ -87,14 +91,21 @@ app.post("/urls", (req, res) => {
 });
 
 app.get("/urls/new", (req, res) => {
-  const templateVars = {username: req.cookies["username"] };
+    // read the user id value from the cookies
+    const userId = req.cookies['user_id'];
+    // retrieve the user object from users db
+    const currentUser = users[userId];
+   const templateVars = {user: currentUser};
   res.render("urls_new", templateVars);
 });
 
 
 
 app.get("/urls/:shortURL", (req, res) => {
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], username: req.cookies["username"] };
+  const userId = req.cookies['user_id'];
+  //retrieve the user object from user db
+  const currentUser = users[userId];
+  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], user: currentUser };
   res.render("urls_show", templateVars);
 });
 
@@ -138,20 +149,25 @@ app.post("/logout", (req,res) => {
 });
 
 app.get("/register", (req,res) => {
-  const templateVars ={username: req.cookies["username"]};
+  //Display the register form
+  const templateVars ={user: null};
   res.render("register", templateVars);
 });
 
+
+//Handling register form submitted
  app.post("/register", (req, res) => {
-  const userId = Math.random().toString(36).substring(2, 8);
+
   // Extract the email and password from the form
   // req.body (body-parser) => get the info from our form
   const email = req.body.email;
   const password = req.body.password;
+  const id = addNewUser(email, password);
   // Setting the cookie in the user's browser
-  res.cookie('user_id', userId);
+  res.cookie('user_id', id);
   res.redirect('/urls');
  });
+
 
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);

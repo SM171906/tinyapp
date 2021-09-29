@@ -14,21 +14,22 @@
 
       </div>
     </div>
-    <% if (!username) {%>
+    <% if (!user) {%>
       <form method="POST" action="/login" class = "form-inline">
         <!-- <label for="username">Login:</label> -->
         <input
           class="form-control mr-sn-2"
           type="text"
-          name="username"
-          placeholder="username"
+          name="user"
+          placeholder="user"
           style="width: 300px; margin: 1em"
         />
         <button type="submit" class="btn btn-outline-primary">Login</button>
-        <button type="submit" class="btn btn-outline-primary">Register</button>
+       
+     
       </form>
     <%} else{%>
-    <span class="badge badge-warning"><h5>Logged in as: <%= username %>!</h5></span>
+    <span class="badge badge-warning"><h5>Logged in as: <%= user.email%>!</h5></span>
     <form method="POST" action="/logout" class = "form-inline">
       <button type="submit" class="btn btn-outline-dark">Logout</button>
     </form>
