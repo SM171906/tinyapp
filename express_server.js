@@ -30,6 +30,47 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
+const users = { 
+  "userRandomID": {
+    id: "userRandomID", 
+    email: "user@example.com", 
+    password: "purple-monkey-dinosaur"
+  },
+ "user2RandomID": {
+    id: "user2RandomID", 
+    email: "user2@example.com", 
+    password: "dishwasher-funk"
+  }
+}
+
+
+const addNewUser = (email, password) => {
+  // Create a user id ... generate a unique id
+  const userId = Math.random().toString(36).substring(2, 8);
+
+  // Create a new user object
+
+  const newUser = {
+    id: userId,
+   
+    email,
+    password,
+  };
+
+  // Add the user to the database
+
+  // Read the value associated with the key
+  // nameOfTheobject[key]
+
+  // how you add a value to an object
+  // nameOfTheobject[key] = value
+
+  users[userId] = newUser;
+
+  return userId;
+};
+
+
 app.get("/", (req, res) => {
   res.send("Hello!");
 });
@@ -101,9 +142,16 @@ app.get("/register", (req,res) => {
   res.render("register", templateVars);
 });
 
-// app.post("/register", (req, res) => {
- 
-// });
+ app.post("/register", (req, res) => {
+  const userId = Math.random().toString(36).substring(2, 8);
+  // Extract the email and password from the form
+  // req.body (body-parser) => get the info from our form
+  const email = req.body.email;
+  const password = req.body.password;
+  // Setting the cookie in the user's browser
+  res.cookie('user_id', userId);
+  res.redirect('/urls');
+ });
 
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
