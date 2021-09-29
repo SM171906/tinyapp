@@ -5,6 +5,7 @@ const bodyParser = require("body-parser");
 const  response  = require("express");
 const cookieParser = require('cookie-parser');
 const { v4: uuidv4 } = require('uuid');
+const { reset } = require("nodemon");
 
 app.use(cookieParser());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -46,27 +47,70 @@ const users = {
 const addNewUser = (email, password) => {
   // Create a user id ... generate a unique id
   const userId = Math.random().toString(36).substring(2, 8);
-
   // Create a new user object
-
   const newUser = {
     id: userId,
     email,
     password,
   };
-
   // Add the user to the database
-
   // Read the value associated with the key
   // nameOfTheobject[key]
-
   // how you add a value to an object
   // nameOfTheobject[key] = value
-
   users[userId] = newUser;
-
   return userId;
 };
+
+const getUserByEmail = (email) => {
+   for (let userId in users) {
+    if(users[userId].email === email) {
+      return users[userId];
+    }
+
+   }
+   return null;
+ };
+ 
+//  const validUser = (email, password) => {
+//    const user = getUserEmail(email);
+//    //check that the email & password are not empty strings
+//    if (user && user.password !== "" && user && user.password !== password ) {
+//      return user.id;
+//    } else {
+//      return res.status(403);
+//    }
+//  };
+
+
+app.get("/register", (req,res) => {
+  //Display the register form
+  const templateVars = {user: null};
+  res.render("register", templateVars);
+});
+
+
+//Handling register form submitted
+ app.post("/register", (req, res) => {
+  // Extract the email and password from the form
+  // req.body (body-parser) => get the info from our form
+  const email = req.body.email;
+  const password = req.body.password;
+  // validation: check that the user is not already in the database
+  const user = getUserByEmail(email);
+  if(email === "" || password === "" || user){
+    res.status(400);
+    res.send('None shall pass');
+  } else {
+    const userId = addNewUser(email, password); 
+    // Setting the cookie in the user's browser
+    res.cookie('user_id', userId);
+    res.redirect("/urls");
+  }
+    
+  
+  
+ });
 
 
 app.get("/", (req, res) => {
@@ -77,9 +121,7 @@ app.get("/urls", (req, res) => {
   // read the user id from the cookies
   const userId = req.cookies['user_id'];
    // retrieve the user object from users db
-   console.log(users);
    const currentUser = users[userId];
-   console.log(currentUser);
   const templateVars = { urls: urlDatabase, user: currentUser };
   res.render("urls_index", templateVars);
 });
@@ -144,29 +186,11 @@ app.post("/login",(req, res) => {
 });
 
 app.post("/logout", (req,res) => {
-  res.clearCookie('username', {path:'/'});
+  res.clearCookie('user_id', {path:'/'});
   res.redirect("/urls");
 });
 
-app.get("/register", (req,res) => {
-  //Display the register form
-  const templateVars ={user: null};
-  res.render("register", templateVars);
-});
 
-
-//Handling register form submitted
- app.post("/register", (req, res) => {
-
-  // Extract the email and password from the form
-  // req.body (body-parser) => get the info from our form
-  const email = req.body.email;
-  const password = req.body.password;
-  const id = addNewUser(email, password);
-  // Setting the cookie in the user's browser
-  res.cookie('user_id', id);
-  res.redirect('/urls');
- });
 
 
 app.get("/urls.json", (req, res) => {
