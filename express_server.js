@@ -54,7 +54,7 @@ const users = {
 }
 
 //Helper function
-const urlsForUser= (id) => {
+const urlsForUser = (id) => {
   const filteredURLs = {};
   const keys = Object.keys(urlDatabase);
   for (let key of keys) {
@@ -116,6 +116,13 @@ const getUserPassword = (email) => {
 
 
 app.get("/", (req, res) => {
+  const userId = req.cookies['user_id'];
+  const user = users[userId];
+  if (!user){
+    return res.redirect("/login");
+  }
+  res.redirect("/urls");
+
   res.send("Hello!");
 });
 
@@ -159,21 +166,26 @@ app.get("/login", (req, res) => {
 app.post("/login", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
-  const userId = getUserId(email)
 
-  const result = getUserByEmail(email)
-
-  if (!result) {
-    res.status(403).send("Cann't be found!");
-    return;
+  const user = getUserByEmail(email);
+  if(!user || user.password !== password) {
+    return res.status(401).send("Invalid credentials. Please <a href='/login'>Login</a>");
   }
+  // const userId = getUserId(email)
 
-  const typedPassword = getUserPassword(email);
+  // const result = getUserByEmail(email)
 
-  if (password !== typedPassword) {
-    res.status(403).send("Password does not match!!!!");
-    return;
-  }
+  // if (!result) {
+  //   res.status(403).send("Cann't be found!");
+  //   return;
+  // }
+
+  // const typedPassword = getUserPassword(email);
+
+  // if (password !== typedPassword) {
+  //   res.status(403).send("Password does not match!!!!");
+  //   return;
+  // }
 
   res.cookie("user_id", userId);
   //console.log("req", req);
@@ -181,24 +193,26 @@ app.post("/login", (req, res) => {
 
 });
 
-app.post("/logout", (req, res) => {
-  res.clearCookie('user_id', { path: '/' });
-  res.redirect("/urls");
-});
+
 
 app.get("/urls", (req, res) => {
   // read the user id from the cookies
   const userId = req.cookies['user_id'];
   // retrieve the user object from users db
   if(!userId) {
-    return res.send ("Login");
-    
+    res.status(401).send("You must <a href='/login'>Login</a> first");
+    return
   }
   //userdatabase needs to pass if it is moved to helper file.
   const updatedURLs = urlsForUser(userId);
   const currentUser = users[userId];
   const templateVars = { urls: updatedURLs, user: currentUser };
   res.render("urls_index", templateVars);
+});
+
+app.post("/logout", (req, res) => {
+  res.clearCookie('user_id', { path: '/' });
+  res.redirect("/login");
 });
 
 app.post("/urls", (req, res) => {
@@ -208,6 +222,8 @@ app.post("/urls", (req, res) => {
   
   res.redirect(`/urls/${shortURL}`);
 });
+
+
 
 app.get("/urls/new", (req, res) => {
   // read the user id value from the cookies
@@ -252,8 +268,20 @@ app.get("/u/:shortURL", (req, res) => {
 });
 
 
-app.post("/urls/:shortURL/delete", (req, res) => {
-  delete urlDatabase[req.params.shortURL];
+app.post("/urls/:id/delete", (req, res) => {
+  const userId = req.cookies['user_id'];
+  if (userId) {
+    const urls = urlsForUser(userId);
+    const id = req.params.id;
+    const url = urls[id];
+    if(url){
+      delete urlDatabase[id];
+    }
+     res.redirect("/urls");;
+  } else {
+   const templateVars = {user : users[req.cookies['user_id']], message: "Couldn't delete url"};
+   return res.render ("error", templateVars);
+  }
   res.redirect("/urls");
 });
 
