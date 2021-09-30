@@ -70,16 +70,27 @@ const getUserByEmail = (email) => {
    }
    return null;
  };
+ // helper function to find userid of existing clients
+ const getUserId = (email) => {
+  for (let userId in users) {
+   if(users[userId].email === email) {
+     return userId;
+   }
+  }
+  return null;
+};
  
-//  const validUser = (email, password) => {
-//    const user = getUserByEmail(email);
-//    //check that the email & password are not empty strings
-//    if (user && user.password !== "" && user && user.password !== password ) {
-//      return user.id;
-//    } else {
-//      return null;
-//    }
-//  };
+// helper function to find password of existing clients
+const getUserPassword = (email) => {
+  for (let userId in users) {
+   if(users[userId].email === email) {
+     return users[userId].password
+   }
+  }
+  return null;
+};
+
+
 
 
  app.get("/", (req, res) => {
@@ -122,14 +133,25 @@ app.get("/login", (req,res) => {
   res.render("login", templateVars);
  
  });
+ 
 app.post("/login",(req, res) => {
   const email = req.body.email;
   const password = req.body.password;
+  const userId = getUserId(email)
+
+  const result = getUserByEmail(email)
   
-  if(email === null) {
+  if(!result) {
     res.status(403).send("Cann't be found!");
-   
-  } else if (email )
+   return;
+  } 
+
+  const typedPassword = getUserPassword(email) ;
+
+  if(password !== typedPassword){
+    res.status(403).send("Password does not match!!!!");
+   return;
+  }
   res.cookie("user_id", userId);
   //console.log("req", req);
   res.redirect("/urls");
