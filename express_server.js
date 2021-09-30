@@ -67,7 +67,6 @@ const getUserByEmail = (email) => {
     if(users[userId].email === email) {
       return users[userId];
     }
-
    }
    return null;
  };
@@ -91,6 +90,8 @@ app.get("/register", (req,res) => {
 
 
 //Handling register form submitted
+
+
  app.post("/register", (req, res) => {
   // Extract the email and password from the form
   // req.body (body-parser) => get the info from our form
@@ -107,14 +108,28 @@ app.get("/register", (req,res) => {
     res.cookie('user_id', userId);
     res.redirect("/urls");
   }
-    
-  
-  
  });
-
 
 app.get("/", (req, res) => {
   res.send("Hello!");
+});
+
+app.get("/login", (req,res) => {
+  //Display the register form
+  const templateVars = {user: null};
+  res.render("login", templateVars);
+ 
+ });
+app.post("/login",(req, res) => {
+
+  res.cookie("username", req.body.username);
+  //console.log("req", req);
+  res.redirect("/urls");
+});
+
+app.post("/logout", (req,res) => {
+  res.clearCookie('user_id', {path:'/'});
+  res.redirect("/urls");
 });
 
 app.get("/urls", (req, res) => {
@@ -177,20 +192,6 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
-
-app.post("/login",(req, res) => {
-
-  res.cookie("username", req.body.username);
-  //console.log("req", req);
-  res.redirect("/urls");
-});
-
-app.post("/logout", (req,res) => {
-  res.clearCookie('user_id', {path:'/'});
-  res.redirect("/urls");
-});
-
-
 
 
 app.get("/urls.json", (req, res) => {
