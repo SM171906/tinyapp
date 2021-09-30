@@ -72,15 +72,19 @@ const getUserByEmail = (email) => {
  };
  
 //  const validUser = (email, password) => {
-//    const user = getUserEmail(email);
+//    const user = getUserByEmail(email);
 //    //check that the email & password are not empty strings
 //    if (user && user.password !== "" && user && user.password !== password ) {
 //      return user.id;
 //    } else {
-//      return res.status(403);
+//      return null;
 //    }
 //  };
 
+
+ app.get("/", (req, res) => {
+  res.send("Hello!");
+});
 
 app.get("/register", (req,res) => {
   //Display the register form
@@ -110,9 +114,7 @@ app.get("/register", (req,res) => {
   }
  });
 
-app.get("/", (req, res) => {
-  res.send("Hello!");
-});
+
 
 app.get("/login", (req,res) => {
   //Display the register form
@@ -121,10 +123,17 @@ app.get("/login", (req,res) => {
  
  });
 app.post("/login",(req, res) => {
-
-  res.cookie("username", req.body.username);
+  const email = req.body.email;
+  const password = req.body.password;
+  
+  if(email === null) {
+    res.status(403).send("Cann't be found!");
+   
+  } else if (email )
+  res.cookie("user_id", userId);
   //console.log("req", req);
   res.redirect("/urls");
+  
 });
 
 app.post("/logout", (req,res) => {
