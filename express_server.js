@@ -8,10 +8,23 @@ const { v4: uuidv4 } = require('uuid');
 const { reset } = require("nodemon");
 const bcrypt = require('bcryptjs');
 const salt = bcrypt.genSaltSync(10);
+const cookieSession = require('cookie-session')
+const express = require('express')
+const app = express()
+
+
 
 app.use(cookieParser());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.set("view engine", "ejs");
+app.use(cookieSession({
+  name: 'session',
+  keys: [/* secret keys */],
+
+  // Cookie Options
+  maxAge: 24 * 60 * 60 * 1000 // 24 hours
+}))
+
 
 
 function generateRandomString() {
