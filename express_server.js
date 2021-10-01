@@ -6,6 +6,8 @@ const response = require("express");
 const cookieParser = require('cookie-parser');
 const { v4: uuidv4 } = require('uuid');
 const { reset } = require("nodemon");
+const bcrypt = require('bcryptjs');
+const salt = bcrypt.genSaltSync(10);
 
 app.use(cookieParser());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -44,12 +46,12 @@ const users = {
   "user1RandomID": {
     id: "user1RandomID",
     email: "user@example.com",
-    password: "123"
+    password: bcrypt.hashSync("ok", salt)
   },
   "user2RandomID": {
     id: "user2RandomID",
     email: "user2@example.com",
-    password: "dishwasher-funk"
+    password: bcrypt.hashSync("dishwasher-funk", salt)
   }
 }
 
@@ -70,10 +72,11 @@ const addNewUser = (email, password) => {
   // Create a user id ... generate a unique id
   const userId = Math.random().toString(36).substring(2, 8);
   // Create a new user object
+  const hashedPassword = bcrypt.hashSync(password, salt);
   const newUser = {
     id: userId,
     email,
-    password,
+    password: hashedPassword,
   };
   // Add the user to the database
   // Read the value associated with the key
@@ -92,28 +95,6 @@ const getUserByEmail = (email) => {
   }
   return null;
 };
-// helper function to find userid of existing clients
-const getUserId = (email) => {
-  for (let userId in users) {
-    if (users[userId].email === email) {
-      return userId;
-    }
-  }
-  return null;
-};
-
-// helper function to find password of existing clients
-const getUserPassword = (email) => {
-  for (let userId in users) {
-    if (users[userId].email === email) {
-      return users[userId].password
-    }
-  }
-  return null;
-};
-
-
-
 
 app.get("/", (req, res) => {
   const userId = req.cookies['user_id'];
@@ -141,13 +122,14 @@ app.post("/register", (req, res) => {
   // req.body (body-parser) => get the info from our form
   const email = req.body.email;
   const password = req.body.password;
+  const hashedPassword = bcrypt.hashSync(password, salt)
   // validation: check that the user is not already in the database
   const user = getUserByEmail(email);
   if (email === "" || password === "" || user) {
     res.status(400);
     res.send('None shall pass');
   } else {
-    const userId = addNewUser(email, password);
+    const userId = addNewUser(email, hashedPassword);
     // Setting the cookie in the user's browser
     res.cookie('user_id', userId);
     res.redirect("/urls");
@@ -166,31 +148,22 @@ app.get("/login", (req, res) => {
 app.post("/login", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
-
+  let hashPw = getUserByEmail(email, users)["password"]
+  const isPasswordCorrect = bcrypt.compareSync(password,hashPw );
+  console.log(isPasswordCorrect);
+  //const userId = req.cookies['user_id'];
   const user = getUserByEmail(email);
-  if(!user || user.password !== password) {
-    return res.status(401).send("Invalid credentials. Please <a href='/login'>Login</a>");
+  if (!user){
+    return res.status(403).send("Invalid credentials. Please <a href='/login'>Login</a>");
   }
-  // const userId = getUserId(email)
-
-  // const result = getUserByEmail(email)
-
-  // if (!result) {
-  //   res.status(403).send("Cann't be found!");
-  //   return;
-  // }
-
-  // const typedPassword = getUserPassword(email);
-
-  // if (password !== typedPassword) {
-  //   res.status(403).send("Password does not match!!!!");
-  //   return;
-  // }
-
-  res.cookie("user_id", userId);
-  //console.log("req", req);
-  res.redirect("/urls");
-
+  if(!isPasswordCorrect) {
+    return res.status(403).send("Invalid credentials. Please <a href='/login'>Login</a>");
+  } else  {
+    res.cookie("user_id", user.id);
+    console.log(user);
+    res.redirect("/urls");
+  }
+  
 });
 
 
@@ -216,10 +189,12 @@ app.post("/logout", (req, res) => {
 });
 
 app.post("/urls", (req, res) => {
-  
-  shortURL = generateRandomString();
-  urlDatabase[shortURL] = {longURL: req.body.longURL} ;
-  
+  const userID = req.cookies['user_id'];
+  const shortURL = generateRandomString();
+  urlDatabase[shortURL] = {longURL: req.body.longURL, userID: userID} ;
+  console.log(req.body.longURL);
+  console.log(urlDatabase);
+  console.log(shortURL);
   res.redirect(`/urls/${shortURL}`);
 });
 
@@ -278,11 +253,7 @@ app.post("/urls/:id/delete", (req, res) => {
       delete urlDatabase[id];
     }
      res.redirect("/urls");;
-  } else {
-   const templateVars = {user : users[req.cookies['user_id']], message: "Couldn't delete url"};
-   return res.render ("error", templateVars);
   }
-  res.redirect("/urls");
 });
 
 
