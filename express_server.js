@@ -75,11 +75,11 @@ app.post("/register", (req, res) => {
   // req.body (body-parser) => get the info from our form
   const email = req.body.email;
   const password = req.body.password;
+  // check if user already exists
   const user = getUserByEmail(email, users);
-
   if (email === "" || password === "" || user) {
     res.status(400);
-    res.send('None shall pass');
+    res.send("Please input valid credential <a href='/register'>Register</a> ");
   } else {
      const user = addNewUser(email, bcrypt.hashSync(password, salt), users);
     // Setting the cookie in the user's browser
@@ -161,18 +161,19 @@ app.get("/urls/new", (req, res) => {
   const userId = req.session.user_id;
   if (!userId) {
     res.redirect("/login");
-  }
+  } else {
   // retrieve the user object from users db
   const currentUser = users[userId];
   const templateVars = { user: currentUser };
   res.render("urls_new", templateVars);
+  }
 });
 
 app.get("/urls/:id", (req, res) => {
   const userId = req.session.user_id;
   //retrieve the user object from user db
   if(!userId) {
-    return res.send("Login to Edit!!");
+    return res.send("<a href='/login'>Login</a> to Edit!!");
   }
   const currentUser = users[userId];
   const templateVars = { 
