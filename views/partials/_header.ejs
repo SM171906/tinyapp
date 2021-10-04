@@ -19,7 +19,7 @@
       <span>|</span>
       <a  href='/register'>Register</a>
     <%} else{%>
-    <span class="badge badge-warning"><h5>Logged in as: <%= user.email%>!</h5></span>
+    <span class="badge badge-warning"><h5>Logged in as: <%= user.email%></h5></span>
     <form method="POST" action="/logout" class = "form-inline">
       <button type="submit" class="btn btn-outline-dark">Logout</button>
     </form>

@@ -1,4 +1,5 @@
 const{urlsForUser, addNewUser, getUserByEmail,generateRandomString} = require('./helpers.js');
+const{urlDatabase, users} = require('./database.js');
 
 const express = require("express");
 const app = express();
@@ -15,42 +16,14 @@ const cookieSession = require('cookie-session')
 app.use(cookieParser());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.set("view engine", "ejs");
+
 app.use(cookieSession({
   name: 'session',
   keys: ["key1", "key2"],
 
   // Cookie Options
   maxAge: 24 * 60 * 60 * 1000 // 24 hours
-}))
-
-const urlDatabase = {
-  b6UTxQ: {
-      longURL: "https://www.tsn.ca",
-      userID: "aJ48lW"
-  },
-  i3BoGr: {
-      longURL: "https://www.google.ca",
-      userID: "aJ48lW"
-  },
-  i3BoGl: {
-    longURL: "https://www.google.ca",
-    userID: "aJ48lM"
-}
-};
-
-const users = {
-  "user1RandomID": {
-    id: "user1RandomID",
-    email: "user@example.com",
-    password: bcrypt.hashSync("ok", salt)
-  },
-  "user2RandomID": {
-    id: "user2RandomID",
-    email: "user2@example.com",
-    password: bcrypt.hashSync("dishwasher-funk", salt)
-  }
-}
-
+}));
 
 
 
@@ -105,6 +78,7 @@ app.post("/login", (req, res) => {
   if (!user){
     return res.status(403).send("Invalid credentials. Please <a href='/login'>Login</a>");
   }
+  //password hashed
   let hashPw = getUserByEmail(email, users)["password"];
 
   const isPasswordCorrect = bcrypt.compareSync(password,hashPw );
@@ -149,6 +123,9 @@ app.post("/logout", (req, res) => {
 app.post("/urls", (req, res) => {
   const userID = req.session.user_id;
   const shortURL = generateRandomString();
+  if(!userID){
+    return res.send("<a href='/login'>Login</a> to add an url!!")
+  }
   urlDatabase[shortURL] = {
     longURL: req.body.longURL, 
     userID: userID
@@ -178,19 +155,31 @@ app.get("/urls/:id", (req, res) => {
   const currentUser = users[userId];
   const templateVars = { 
     shortURL: req.params.id, 
-    longURL: urlDatabase[req.params.id].longURL, user: currentUser
+    longURL: urlDatabase[req.params.id].longURL, 
+    user: currentUser
    };
   res.render("urls_show", templateVars);
 });
 
 app.post("/urls/:id", (req, res) => {
   const shortURL = req.params.id;
+  const userId = req.session.user_id;
   // udateUrl is from urls_show(name)
+  if(!userId){
+    return res.send ("<a href='/login'>Login</a> to Edit!!");
+  }
+  if(urlDatabase[shortURL].userID !== userId){
+    return res.send("Don't have permission to Edit this URL!!");
+  }
   urlDatabase[shortURL].longURL = req.body.updateUrl; 
   res.redirect("/urls");
 });
 
 app.get("/u/:shortURL", (req, res) => {
+
+  if(!urlDatabase[req.params.shortURL]){
+    return res.send ("shortURL hasn't been created.");
+  }
   const longURL = urlDatabase[req.params.shortURL].longURL;
   if (!longURL) {
     
@@ -202,15 +191,23 @@ app.get("/u/:shortURL", (req, res) => {
 
 
 app.post("/urls/:id/delete", (req, res) => {
+
   const userId = req.session.user_id;
+
   if (userId) {
     const urls = urlsForUser(userId, urlDatabase);
     const id = req.params.id;
     const url = urls[id];
+
+    if(urlDatabase[id].userID !== userId){
+      return res.send("Don't have permission to Delete this URL!!");
+    }
     if(url){
       delete urlDatabase[id];
     }
      res.redirect("/urls");;
+  } else {
+    return res.send("Please login to Delete");
   }
 });
 
