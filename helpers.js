@@ -1,4 +1,5 @@
 const urlsForUser = (id, urlDatabase) => {
+  console.log("urlsForUser: "+id);
   const filteredURLs = {};
   const keys = Object.keys(urlDatabase);
   for (let key of keys) {

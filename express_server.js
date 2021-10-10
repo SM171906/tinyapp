@@ -20,9 +20,7 @@ app.set("view engine", "ejs");
 app.use(cookieSession({
   name: 'session',
   keys: ["key1", "key2"],
-
-  // Cookie Options
-  maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  maxAge: 24 * 60 * 60 * 1000 
 }));
 
 
@@ -45,7 +43,6 @@ app.get("/register", (req, res) => {
 //Handling register form submitted
 app.post("/register", (req, res) => {
   // Extract the email and password from the form
-  // req.body (body-parser) => get the info from our form
   const email = req.body.email;
   const password = req.body.password;
   // check if user already exists
@@ -86,13 +83,8 @@ app.post("/login", (req, res) => {
   if(!isPasswordCorrect) {
     return res.status(403).send("Invalid credentials. Please <a href='/login'>Login</a>");
   } else  {
-    const user = addNewUser(email, hashPw, users);
-
-   // Setting the cookie in the user's browser
    req.session.user_id = user.id;
-    //console.log(user_id)
-    console.log(user);
-    res.redirect("/urls");
+   res.redirect("/urls");
   }
   
 });
@@ -101,17 +93,19 @@ app.get("/urls", (req, res) => {
   // read the user id from the cookies
   const userId = req.session['user_id'];
   // retrieve the user object from users db
+  console.log("urls: "+userId)
   if(!userId) {
     res.status(401).send("You must <a href='/login'>Login</a> first");
     return
   }
-  //userdatabase needs to pass if it is moved to helper file.
   const updatedURLs = urlsForUser(userId, urlDatabase);
-  const currentUser = users[userId];
+  const currentUser = userId;
+  console.log("currentUser: "+ currentUser);
   const templateVars = { 
     urls: updatedURLs, 
     user: currentUser 
   };
+  console.log(urlDatabase);
   res.render("urls_index", templateVars);
 });
 
@@ -158,6 +152,7 @@ app.get("/urls/:id", (req, res) => {
     longURL: urlDatabase[req.params.id].longURL, 
     user: currentUser
    };
+   
   res.render("urls_show", templateVars);
 });
 
