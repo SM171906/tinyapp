@@ -36,8 +36,13 @@ app.get("/", (req, res) => {
 
 app.get("/register", (req, res) => {
   //Display the register form
-  const templateVars = { user: null };
-  res.render("register", templateVars);
+  if(req.session.user_id){
+    res.redirect("/urls");
+  }else {
+    const templateVars = { user: null };
+    res.render("register", templateVars);
+  }
+  
 });
 
 //Handling register form submitted
@@ -62,9 +67,14 @@ app.post("/register", (req, res) => {
 
 app.get("/login", (req, res) => {
   //Display the register form
-  const templateVars = { user: null };
+  if(req.session.user_id){
+    res.redirect("/urls");
+  } else {
+    const templateVars = { user: null };
   res.render("login", templateVars);
-
+  
+  }
+  
 });
 
 app.post("/login", (req, res) => {
@@ -99,8 +109,7 @@ app.get("/urls", (req, res) => {
     return
   }
   const updatedURLs = urlsForUser(userId, urlDatabase);
-  const currentUser = userId;
-  console.log("currentUser: "+ currentUser);
+  const currentUser = users[userId];
   const templateVars = { 
     urls: updatedURLs, 
     user: currentUser 
@@ -140,16 +149,19 @@ app.get("/urls/new", (req, res) => {
   }
 });
 
-app.get("/urls/:id", (req, res) => {
+app.get("/urls/:shortURL", (req, res) => {
   const userId = req.session.user_id;
   //retrieve the user object from user db
   if(!userId) {
     return res.send("<a href='/login'>Login</a> to Edit!!");
   }
+  if(urlDatabase[req.params.shortURL].userID !== userId){
+    return res.send("Don't have permission!!");
+  }
   const currentUser = users[userId];
   const templateVars = { 
-    shortURL: req.params.id, 
-    longURL: urlDatabase[req.params.id].longURL, 
+    shortURL: req.params.shortURL, 
+    longURL: urlDatabase[req.params.shortURL].longURL, 
     user: currentUser
    };
    
